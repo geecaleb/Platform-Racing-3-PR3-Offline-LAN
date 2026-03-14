@@ -21,4 +21,4 @@ Included in the Releases tab are two appimages and the swf downloader. One appim
 
 A lot of work went into the project and everything for the most part seems fully functional. If Joni ever decides to make his postgre scripts public one day for offline play, then his project will be superior.. but until then this will do :).
 
-All credit goes to joni for uploading his server to github which allowed this project to be done in the first place. Happy gaming fellow Platform Racers!
+All credit goes to joni (https://github.com/PlatformRacing3/Backend) for uploading his server to github which allowed this project to be done in the first place. Happy gaming fellow Platform Racers!
