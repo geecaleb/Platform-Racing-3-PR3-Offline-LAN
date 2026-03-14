@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Platform Racing 3</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #1a1a1a;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        #ruffle-container {
+            width: 100%;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+        }
+    </style>
+    <script src="https://unpkg.com/@ruffle-rs/ruffle"></script>
+</head>
+<body>
+    <div id="ruffle-container"></div>
+    <script>
+        window.RufflePlayer = window.RufflePlayer || {};
+        window.addEventListener("load", () => {
+            const ruffle = window.RufflePlayer.newest();
+            const player = ruffle.createPlayer({
+                allowScriptAccess: true,
+                base: window.location.href,
+                menu: false,
+                scale: "showAll",
+                quality: "high",
+                backgroundColor: "#1a1a1a",
+                letterbox: "on",
+                warnOnUnsupportedContent: true,
+                contextMenu: true
+            });
+            const container = document.getElementById("ruffle-container");
+            container.appendChild(player);
+            
+            player.config = {
+                polyfills: true,
+                autoplay: "on",
+                unmuteOverlay: "visible",
+                preloader: true,
+                splashScreen: false,
+                maxExecutionDuration: 15
+            };
+            
+            player.load({
+                url: "PlatformRacing3_Debug.swf",
+                parameters: {
+                    base: window.location.href
+                }
+            });
+        });
+    </script>
+</body>
+</html>

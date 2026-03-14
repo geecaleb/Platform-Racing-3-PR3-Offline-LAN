@@ -1,0 +1,28 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+	  <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <PackageReference Include="Discord.Net.Webhook" Version="3.12.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Net\Net.Collections\Net.Collections.csproj" />
+    <ProjectReference Include="..\Net\Net.Communication\Net.Communication.csproj" />
+    <ProjectReference Include="..\Net\Net\Net.csproj" />
+    <ProjectReference Include="..\PlatformRacing3.Common\PlatformRacing3.Common.csproj" />
+    <ProjectReference Include="..\PlatformRacing3.Server.API\PlatformRacing3.Server.API.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="settings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,377 @@
+package com.jiggmin.pr3.game
+{
+   import com.jiggmin.data.*;
+   import com.jiggmin.popup.*;
+   import com.jiggmin.pr3.*;
+   import com.jiggmin.pr3.lister.*;
+   import com.jiggmin.pr3.lobby.*;
+   import com.jiggmin.sound.*;
+   import com.sparkworkz.*;
+   import com.jiggmin.text.*;
+   import com.jiggmin.pr3.lobby.customize.ExpBar;
+   import com.jiggmin.pr3.lobby.customize.CustomizePopup;
+   import com.jiggmin.ui.ButtonClass;
+   import flash.text.TextField;
+   import flash.display.DisplayObject;
+   import flash.display.DisplayObjectContainer;
+   import flash.events.Event;
+   import com.jiggmin.blossomSocket.BlossomEvent;
+   
+   public class SinglePlayerFinishPopup extends ButtonPopup
+   {
+      private var season:String;
+      private var leveledUp:Boolean = false;
+      
+      private var retryFunction:Function;
+      
+      private var m:SinglePlayerFinishPopupGraphic;
+      private var expBar:ExpBar;
+      private var xpText:TextField;
+      private var retryBtn:ButtonClass;
+      private var lobbyBtn:ButtonClass;
+      
+      // Constants for XP calculation
+      private const EXP_FOR_FINISHING:int = 5;
+      private const GOLD_MEDAL_MULTIPLIER:int = 9;
+      private const SILVER_MEDAL_MULTIPLIER:int = 6;
+      private const BRONZE_MEDAL_MULTIPLIER:int = 3;
+      
+      public function SinglePlayerFinishPopup(season:String, param1:int, version:int, param2:Number, param3:String, param4:Function)
+      {
+         super();
+         
+         this.season = season;
+         var _loc_10:* = null;
+         var _loc_11:* = 0;
+         var _loc_14:* = null;
+         var _loc_15:* = false;
+         this.retryFunction = param4;
+         setBG(new EditorPopupBGGraphic());
+         this.m = new SinglePlayerFinishPopupGraphic();
+         addGraphic(this.m);
+         
+         // Create buttons and position them
+         retryBtn = createButton(this.clickRetry, "Retry");
+         lobbyBtn = createButton(this.clickLobby, "Return to Lobby");
+         retryBtn.y += 50;
+         lobbyBtn.y += 50;
+         
+         var _loc_5:* = 0;
+         var _loc_6:* = 0;
+         var _loc_7:* = 0;
+         var _loc_8:* = ListCache.getCache("campaign:" + this.season);
+         var _loc_9:* = param2 / 1000;
+         for each(_loc_10 in _loc_8)
+         {
+            if(_loc_10.levelID == param1)
+            {
+               _loc_5 = _loc_10.bronze;
+               _loc_6 = _loc_10.silver;
+               _loc_7 = _loc_10.gold;
+               break;
+            }
+         }
+         this.m.goldBox.text = Data.formatSeconds(_loc_7);
+         this.m.silverBox.text = Data.formatSeconds(_loc_6);
+         this.m.bronzeBox.text = Data.formatSeconds(_loc_5);
+         
+         // Calculate XP based on medal earned
+         var earnedXP:int = 0;
+         var baseXP:int = EXP_FOR_FINISHING;
+         var medalMultiplier:int = 0;
+         
+         _loc_11 = 0;
+         if(param2 > 0 && _loc_9 <= _loc_7)
+         {
+            this.m.medalBox.text = "You earned a Gold Medal!";
+            _loc_11 = 3;
+            medalMultiplier = GOLD_MEDAL_MULTIPLIER;
+            earnedXP = baseXP * medalMultiplier;
+         }
+         else if(param2 > 0 && _loc_9 <= _loc_6)
+         {
+            this.m.medalBox.text = "You earned a Silver Medal!";
+            _loc_11 = 2;
+            medalMultiplier = SILVER_MEDAL_MULTIPLIER;
+            earnedXP = baseXP * medalMultiplier;
+         }
+         else if(param2 > 0 && _loc_9 <= _loc_5)
+         {
+            this.m.medalBox.text = "You earned a Bronze Medal!";
+            _loc_11 = 1;
+            medalMultiplier = BRONZE_MEDAL_MULTIPLIER;
+            earnedXP = baseXP * medalMultiplier;
+         }
+         else if(param1 == 55600)
+         {
+            this.m.medalBox.text = "Play more levels to increase your stats!";
+            earnedXP = 0;
+         }
+         else
+         {
+            this.m.medalBox.text = "Beat these times to earn a medal!";
+            earnedXP = 0;
+         }
+         
+         // Create and position the XP bar
+         if (!SocketManager.socket.me.vars.guest && earnedXP > 0)
+         {
+            var expBarWidth:int = 250;
+            expBar = new ExpBar(SocketManager.socket.me.vars.exp, SocketManager.socket.me.vars.rank, expBarWidth);
+            expBar.x = 40;
+            expBar.y = 180;
+            addChild(expBar);
+            
+            // Create XP text display
+            xpText = new TextField();
+            xpText.x = expBar.x;
+            xpText.y = expBar.y + 25;
+            var xpString:String = "Total: +" + earnedXP + " XP (Base: " + baseXP + " × Medal: " + medalMultiplier + "x)";
+            xpText.text = xpString;
+            xpText.width = 300;
+            xpText.height = 20;
+            xpText.textColor = 0x1922199;
+            xpText.selectable = false;
+            addChild(xpText);
+         }
+         
+         this.m.medals.gotoAndStop(_loc_11 + 1);
+         var _loc_12:* = false;
+         var _loc_13:* = SocketManager.socket.me.vars.campaign[param1];
+         if(SocketManager.socket.me.vars.campaign[param1] == null)
+         {
+            _loc_13 = new Object();
+            _loc_13.timeMS = 999999999;
+            _loc_13.medal = 0;
+            _loc_13.season = this.season;
+         }
+         if(_loc_13.timeMS >= 0 && param2 < _loc_13.timeMS)
+         {
+            this.m.timeBox.text = "It\'s a new record! Your time: " + Data.formatSeconds(param2 / 1000,"decimal");
+            _loc_13.timeMS = param2;
+            _loc_12 = true;
+         }
+         else if(_loc_13.timeMS < 0 && param2 < _loc_13.timeMS)
+         {
+            this.m.timeBox.text = "It\'s a new record! Your time: " + Data.formatSeconds(Math.abs(param2) / 1000,"decimal");
+            _loc_13.timeMS = param2;
+            _loc_12 = true;
+         }
+         else
+         {
+            this.m.timeBox.text = "Your time: " + Data.formatSeconds(param2 / 1000,"decimal");
+            _loc_12 = true;
+         }
+         if(_loc_11 > _loc_13.medal)
+         {
+            _loc_13.medal = _loc_11;
+            _loc_12 = true;
+         }
+         if(_loc_12 && !SocketManager.socket.me.vars.guest)
+         {
+            _loc_14 = <Params></Params>;
+            _loc_14.p_level_id = param1;
+            _loc_14.p_level_version = version;
+            _loc_14.p_recorded_run = param3;
+            _loc_14.p_finish_time = param2;
+            _loc_15 = false;
+            Sparkworkz.DataAccess("SaveCampaignRun3", _loc_14, this.saveRunCallback, _loc_15);
+         }
+         SocketManager.socket.me.vars.campaign[param1] = _loc_13;
+      }
+      
+      private function checkHatRewards() : void
+      {
+         var _loc_4:* = null;
+         var _loc_5:* = null;
+         var _loc_6:* = 0;
+         var _loc_1:* = SocketManager.socket.countMyGoldMedals(this.season);
+         var _loc_2:* = SocketManager.socket.me.vars;
+         var _loc_3:* = _loc_2.prizes[this.season];
+         for each(_loc_4 in _loc_3)
+         {
+            _loc_5 = _loc_2[_loc_4.category + "Array"];
+            _loc_6 = _loc_5.indexOf(_loc_4.id);
+            if(_loc_6 == -1 && _loc_4.medals <= _loc_1)
+            {
+               SocketManager.socket.winHat(this.season,_loc_1);
+               GamePage.instance.addPrizePopup(_loc_4.category,_loc_4.id,"won");
+               Sounds.startSound(new CheerSound(),1);
+               break;
+            }
+         }
+      }
+      
+      public function saveRunCallback(param1:XML, param2:String) : void
+      {
+         if(param2 != "")
+         {
+            addPopup(new MessagePopup("Your run could not be saved. " + param2));
+         }
+         else
+         {
+            this.checkHatRewards();
+            
+            // Handle XP update from server
+            if (param1 != null && !SocketManager.socket.me.vars.guest)
+            {
+                var serverXP:Number = 0;
+                var didRankUp:Boolean = false;
+                var initialRank:Number = SocketManager.socket.me.vars.rank; // Store initial rank for comparison
+                
+                try {
+                    // First try to access XP through Row.xp_earned
+                    if (param1.hasOwnProperty("Row") && param1.Row.hasOwnProperty("xp_earned")) {
+                        serverXP = Number(param1.Row.xp_earned);
+                    } 
+                    // Try direct access if the above path fails
+                    else if (param1.hasOwnProperty("xp_earned")) {
+                        serverXP = Number(param1.xp_earned);
+                    }
+                    
+                    // Check if the response contains rank information
+                    var serverRank:Number = 0;
+                    if (param1.hasOwnProperty("Row") && param1.Row.hasOwnProperty("rank")) {
+                        serverRank = Number(param1.Row.rank);
+                        if (serverRank > initialRank) {
+                            didRankUp = true;
+                        }
+                    } 
+                    // Try direct access if the above path fails
+                    else if (param1.hasOwnProperty("rank")) {
+                        serverRank = Number(param1.rank);
+                        if (serverRank > initialRank) {
+                            didRankUp = true;
+                        }
+                    }
+                    
+                    // Update SocketManager with server XP - this ensures UI consistency
+                    if (serverXP > 0) {
+                        // Update the local XP variable to match server
+                        SocketManager.socket.me.vars.exp = serverXP;
+                        
+                        // Update rank if provided by server
+                        if (serverRank > 0) {
+                            SocketManager.socket.me.vars.rank = serverRank;
+                        }
+                        // Otherwise, try to use checkForRankUp as fallback
+                        else if (SocketManager.socket.me != null && 
+                            SocketManager.socket.me.hasOwnProperty("checkForRankUp")) {
+                            // This will update the rank internally if needed
+                            didRankUp = SocketManager.socket.me.checkForRankUp() || didRankUp;
+                        }
+                        
+                        // Get current rank after possible rank up
+                        var currentRank:Number = SocketManager.socket.me.vars.rank;
+                        
+                        // Force rank-up check again by comparing initial and current rank
+                        if (currentRank > initialRank) {
+                            didRankUp = true;
+                        }
+                        
+                        // If ranked up, show animation and set flags
+                        if (didRankUp) {
+                            this.leveledUp = true;
+                            CustomizePopup.leveledUp = true;
+                            
+                            // Play sound effect for level up
+                            Sounds.startSound(new CheerSound(), 1);
+                            
+                            // Show level up animation if the graphic has it
+                            if (this.m.hasOwnProperty("levelUpAnim") && this.m.levelUpAnim) {
+                                this.m.levelUpAnim.visible = true;
+                                if (this.m.levelUpAnim.hasOwnProperty("gotoAndPlay")) {
+                                    this.m.levelUpAnim.gotoAndPlay("anim");
+                                }
+                            }
+                        }
+                        
+                        // Update the expBar display if it exists
+                        if (expBar != null) {
+                            // Calculate max XP for new rank
+                            var maxExp:Number = calculateExpForRankUp(currentRank);
+                            
+                            // Create a new expBar with updated value AND updated rank
+                            var updatedExpBar:ExpBar = new ExpBar(
+                                serverXP, 
+                                currentRank, // Use current rank which may have increased
+                                expBar.width
+                            );
+                            
+                            // Position it in the same place
+                            updatedExpBar.x = expBar.x;
+                            updatedExpBar.y = expBar.y;
+                            
+                            // Remove old bar and add new one
+                            if (contains(expBar)) {
+                                removeChild(expBar);
+                            }
+                            addChild(updatedExpBar);
+                            expBar = updatedExpBar;
+                            
+                            // Update the XP text to reflect server values
+                            if (xpText != null) {
+                                // Move xpText to front if needed
+                                if (contains(xpText)) {
+                                    setChildIndex(xpText, numChildren - 1);
+                                }
+                            }
+                        }
+                        
+                        // Display rank up popup if rank up occurred
+                        if (didRankUp) {
+                            addPopup(new RankUpPopup(currentRank));
+                        }
+                    }
+                } catch (e:Error) {
+                    // Silent error handling - no logging
+                }
+            }
+         }
+      }
+      
+      override public function remove() : void
+      {
+         this.m = null;
+         this.retryFunction = null;
+         this.expBar = null;
+         this.xpText = null;
+         super.remove();
+      }
+      
+      override public function init() : void
+      {
+         super.init();
+         if(!SocketManager.socket.me.vars.guest)
+         {
+            this.checkHatRewards();
+         }
+      }
+      
+      public function clickRetry() : void
+      {
+         this.retryFunction();
+         this.remove();
+      }
+      
+      public function clickLobby() : void
+      {
+         // If player ranked up, send them to customize page
+         if (this.leveledUp) {
+            setPage(new LobbyPage("customize"));
+         } else {
+            // Otherwise, use standard lobby
+            setPage(new LobbyPage());
+         }
+      }
+      
+      /*
+       * Calculate the XP needed for ranking up - copied from ExpBar class
+       */
+      private function calculateExpForRankUp(rank:int) : Number
+      {
+         return rank == 0 ? 1 : Math.floor(30 * Math.pow(1.25, rank - 1));
+      }
+   }
+}
+
