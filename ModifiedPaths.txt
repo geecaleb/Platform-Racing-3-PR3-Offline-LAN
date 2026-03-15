@@ -1,6 +1,11 @@
 UserVarsUpdateSubscriber.cs = Server\PlatformRacing3.Server\Game\Client
+
 HostBuilderExtensions.cs = Server\PlatformRacing3.Server\Extensions
+
 PlatformRacing3Server.cs = Server\PlatformRacing3.Server\Core
+
 SaveCampaignRun3Procedure.cs = Server\PlatformRacing3.Web\Controllers\DataAccess2\Procedures
+
 DataAccessSaveCampaignRun3Response.cs = Server\PlatformRacing3.Web\Responses\Procedures
-SinglePlayerFinishPopup.as = Decompiled_SWF\scripts\com.jiggmin.pr3.game
+
+SinglePlayerFinishPopup.as = Pr3Project/Server/SWF-Edit/
